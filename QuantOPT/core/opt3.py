@@ -1,4 +1,4 @@
-#coding=utf-8
+# coding=utf-8
 
 from typing import OrderedDict, Union
 import pandas as pd
@@ -8,33 +8,44 @@ from scipy import optimize
 import warnings
 MAX_ITER_COUNT = 15000*2
 
+
 class _Orderedbnds(object):
-    def __init__(self,weight_length:int,default_lower:Union[int,float]=0,default_upper:Union[int,float]=1) -> None:
+    def __init__(self, weight_length: int, default_lower: Union[int, float] = 0, default_upper: Union[int, float] = 1) -> None:
         """
-        
+
         :param weight_length: the length of weigth vector
         :param default_lower: the default lower bound
         :param default_upper: the default upper bound
         :return: OrderedDict, {i:(约束下限,约束上限)}
         """
-        t = {i:(default_lower,default_upper) for i in range(weight_length)}
+        t = {i: (default_lower, default_upper) for i in range(weight_length)}
         self.odict = OrderedDict(t)
 
-    def update(self,adict:dict):
+    def update(self, adict: dict):
+        """
+        update the OrderedDict
+        """
         self.odict.update(adict)
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
+        """
+        get the item
+        """
         return self.odict[key]
 
-    def __setitem__(self,key,value):
-        self.odict.__setitem__(key,value)
+    def __setitem__(self, key, value):
+        """
+        set item
+        """
+        self.odict.__setitem__(key, value)
 
     def tolist(self):
         return list(self.odict.values())
 
+
 class _SimpleOpt(object):
     """
-    
+
     base function
     """
     @staticmethod
@@ -42,7 +53,7 @@ class _SimpleOpt(object):
         return 0
 
     @staticmethod
-    def create_bound(weight_length:int,bounds=None,default_lower=0,default_upper=1):
+    def create_bound(weight_length: int, bounds=None, default_lower=0, default_upper=1):
         """
         create_bound 给定权重的上下限，返回一个 OrderedDict.tolist() 可以转换为 scipy.optimize.minimize 的参数
 
@@ -52,16 +63,15 @@ class _SimpleOpt(object):
         :param default_upper: the default upper bound of weight
         :return: a list of bounds
         """
-        OB = _Orderedbnds(weight_length,default_lower,default_upper)
+        OB = _Orderedbnds(weight_length, default_lower, default_upper)
 
         if bounds is None:
             pass
         else:
-            for i,lower,upper in bounds:
-                OB[i]=( lower,upper )
+            for i, lower, upper in bounds:
+                OB[i] = (lower, upper)
         return OB.tolist()
 
-    
     @staticmethod
     def total_upper(w):
         """
@@ -72,7 +82,7 @@ class _SimpleOpt(object):
         """
         return 1 - np.sum(w)
 
-    @staticmethod   
+    @staticmethod
     def total_lower(w):
         """
         total lower bound of weight
@@ -83,16 +93,17 @@ class _SimpleOpt(object):
         return np.sum(w)
 
     @staticmethod
-    def create_weight(length:int = 100):
+    def create_weight(length: int = 100):
         """
         create weight from equal distribution
         :param: length: the length of weight
         :return: weight
-        
+
         """
         return np.array(1/length*np.ones(length))
+
     @staticmethod
-    def scipy_optimize_minimize(fmin,x,args=(),method=None,jac=None,hassp=None,bounds=None,constraints=(),tol=None,callback=None,options=None,**kwargs):
+    def scipy_optimize_minimize(fmin, x, args=(), method=None, jac=None, hassp=None, bounds=None, constraints=(), tol=None, callback=None, options=None, **kwargs):
         """
         the core function of optimizer, which will use scipy optimize minimize function to optimize the function
 
@@ -109,38 +120,39 @@ class _SimpleOpt(object):
         :param options: the options of optimization
         :param kwargs: the kwargs of optimization
         :return: the optimized weight
-        
-        
+
+
         """
 
-
-
         if options is None:
-            options = {'maxiter':MAX_ITER_COUNT}
+            options = {'maxiter': MAX_ITER_COUNT}
         else:
-            options.update({'maxiter':MAX_ITER_COUNT})
-        return optimize.minimize(fmin,x,args=args,method=method,jac=jac,hassp=hassp,bounds=bounds,constraints=constraints,tol=tol,callback=callback,options=options,**kwargs)
+            options.update({'maxiter': MAX_ITER_COUNT})
+        return optimize.minimize(fmin, x, args=args, method=method, jac=jac, hassp=hassp, bounds=bounds, constraints=constraints, tol=tol, callback=callback, options=options, **kwargs)
 
     @classmethod
-    def create_constraints(cls,constraints,add_default=True):
+    def create_constraints(cls, constraints, add_default=True):
         """
         create constraints from the given constraints parameters
         :param constraints: the constraints parameters
         :param add_default: whether add the default constraints
         :return: the constraints of weight
-        
+
         """
         if add_default:
-            LC = [{'type':'ineq','fun':cls.total_lower},{'type':'ineq','fun':cls.total_upper}]
+            LC = [{'type': 'ineq', 'fun': cls.total_lower},
+                  {'type': 'ineq', 'fun': cls.total_upper}]
         else:
             LC = []
         if constraints is not None:
             for c in constraints:
-                if isinstance(c,dict):
+                if isinstance(c, dict):
                     LC.append(c)
                 else:
-                    warnings.warn(f'found wrong constraints: {c}, please check the constraints, will pass this one!')
+                    warnings.warn(
+                        f'found wrong constraints: {c}, please check the constraints, will pass this one!')
         return LC
+
 
 class _MinVar(object):
     @staticmethod
@@ -149,8 +161,9 @@ class _MinVar(object):
         return var_sigma function
         """
         return ValueError('should be rewrite!')
+
     @classmethod
-    def min_var_constraints(cls,constraint,add_default=True):
+    def min_var_constraints(cls, constraint, add_default=True):
         """
         create constraints
         :param constraints: the raw of constraints
@@ -158,20 +171,19 @@ class _MinVar(object):
         :return: useable constraints for minimum variance
 
         """
-        return _SimpleOpt.create_constraints(constraint,add_default=add_default)
+        return _SimpleOpt.create_constraints(constraint, add_default=add_default)
 
     @classmethod
-    def min_var(cls,w:np.array):
+    def min_var(cls, w: np.array):
         """
         calcualte variance with the given weight
         :param w: weight for min var
         :return: variance
         """
-        return np.dot(w,cls.min_var_sigma2()*w.T)
-
+        return np.dot(w, cls.min_var_sigma2()*w.T)
 
     @classmethod
-    def opt(cls, bounds,constraints,weight_length,method=None,**kwargs):
+    def opt(cls, bounds, constraints, weight_length, method=None, **kwargs):
         """
         the core function to calculate optimized solutions thought scipy optimization and minimize
         :param bounds: the bounds of weight
@@ -187,13 +199,13 @@ class _MinVar(object):
         if method is None:
             method = 'L-BFGS-B'
         if 'options' not in kwargs:
-            kwargs['options'] = {'maxiter':MAX_ITER_COUNT}
+            kwargs['options'] = {'maxiter': MAX_ITER_COUNT}
         else:
-            kwargs['options'].update({'maxiter':MAX_ITER_COUNT})
-        return _SimpleOpt.scipy_optimize_minimize(fmin,w,bounds=bounds,constraints=cons,method=method,**kwargs)
+            kwargs['options'].update({'maxiter': MAX_ITER_COUNT})
+        return _SimpleOpt.scipy_optimize_minimize(fmin, w, bounds=bounds, constraints=cons, method=method, **kwargs)
 
     @classmethod
-    def run_opt(cls, stockpool,bounds,constraints,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, method=None, **kwargs):
         """
         the main function for Minimum Variance Optimization(MVO) run optimization
         :param stockpool: the stockpool
@@ -204,9 +216,9 @@ class _MinVar(object):
         :return: the optimized weight
         """
         weight_length = len(stockpool)
-        return cls.opt(bounds,constraints,weight_length,method=method,**kwargs) 
-        
-        
+        return cls.opt(bounds, constraints, weight_length, method=method, **kwargs)
+
+
 class MinVar(object):
     """
     the class for Minimum Variance Optimization(MVO)
@@ -226,7 +238,7 @@ class MinVar(object):
     #     self.method = method
 
     @staticmethod
-    def _run_opt_fun(stockpool,bounds,constraints,min_var_sigma2,method=None,**kwargs):
+    def _run_opt_fun(stockpool, bounds, constraints, min_var_sigma2, method=None, **kwargs):
         """
         the function for run optimization
         :param stockpool: the stockpool
@@ -237,9 +249,10 @@ class MinVar(object):
         :return: the optimized weight
         """
         _MinVar.min_var_sigma2 = min_var_sigma2
-        return _MinVar.run_opt(stockpool,bounds,constraints,method=method,**kwargs)
+        return _MinVar.run_opt(stockpool, bounds, constraints, method=method, **kwargs)
+
     @classmethod
-    def run_opt(cls, stockpool,bounds,constraints,sigma2,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, sigma2, method=None, **kwargs):
         """
         the main(shell) func for Minimum Variance Optimization(MVO)
         :param stockpool: the stockpool
@@ -253,7 +266,7 @@ class MinVar(object):
         def min_var_sigma2():
             return sigma2
 
-        return cls._run_opt_fun(stockpool,bounds,constraints,min_var_sigma2,method=method,**kwargs)
+        return cls._run_opt_fun(stockpool, bounds, constraints, min_var_sigma2, method=method, **kwargs)
 
 
 class MaxRiskAdjReturn(object):
@@ -267,10 +280,9 @@ class MaxRiskAdjReturn(object):
         TC function: the TC function
 
     """
-    
 
     @staticmethod
-    def _run_opt_fun(stockpool,bounds,constraints,min_var_sigma2,risk_aversion,get_portfolio_returns,TC_func=None,method=None,**kwargs):
+    def _run_opt_fun(stockpool, bounds, constraints, min_var_sigma2, risk_aversion, get_portfolio_returns, TC_func=None, method=None, **kwargs):
         """
         the core function which will call _MaxRiskAdjReturn.run_opt with the given Min_var_sigma2 matrix,risk aversion,get_portfolio_return and TC_func for run optimization
         :param stockpool: the stockpool
@@ -284,12 +296,10 @@ class MaxRiskAdjReturn(object):
         _MaxRiskAdjReturn.risk_aversion = risk_aversion
         _MaxRiskAdjReturn.get_portfolio_returns = get_portfolio_returns
         _MaxRiskAdjReturn.TC_func = TC_func if TC_func is not None else _SimpleOpt.tc
-        return _MaxRiskAdjReturn.run_opt(stockpool,bounds,constraints,method=method,**kwargs) 
-
-
+        return _MaxRiskAdjReturn.run_opt(stockpool, bounds, constraints, method=method, **kwargs)
 
     @classmethod
-    def run_opt(cls, stockpool,bounds,constraints,sigma2,lambda_r,portfolio_returns,TC_func=None,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, sigma2, lambda_r, portfolio_returns, TC_func=None, method=None, **kwargs):
         """
         the main(shell) func for Maximum Risk Adjust Return Optimization(MRAO)
         :param stockpool: the stockpool
@@ -305,18 +315,19 @@ class MaxRiskAdjReturn(object):
         """
         def min_var_sigma2():
             return sigma2
+
         def risk_aversion():
             return lambda_r
 
         def get_portfolio_returns():
             return portfolio_returns
 
-        return cls._run_opt_fun(stockpool,bounds,constraints,min_var_sigma2,risk_aversion,get_portfolio_returns,TC_func=TC_func,method=method,**kwargs)
+        return cls._run_opt_fun(stockpool, bounds, constraints, min_var_sigma2, risk_aversion, get_portfolio_returns, TC_func=TC_func, method=method, **kwargs)
 
 
 class _MaxRiskAdjReturn(object):
     """
-    
+
      requires:
         sigma2: the sigma2 function 协方差矩阵
         lambda_r: 风险厌恶系数
@@ -334,7 +345,7 @@ class _MaxRiskAdjReturn(object):
         :return: the total cost
         """
         return _SimpleOpt.tc(w)
-        
+
     @staticmethod
     def min_var_sigma2(w):
         """
@@ -344,6 +355,7 @@ class _MaxRiskAdjReturn(object):
         :return: the sigma2
         """
         raise NotImplementedError('return sigma2 should be rewriten!')
+
     @staticmethod
     def risk_aversion(w):
         """
@@ -362,10 +374,11 @@ class _MaxRiskAdjReturn(object):
         :param w: the weight
         :return: the portfolio returns
         """
-        raise NotImplementedError('return get_portfolio_returns should be rewriten!')
+        raise NotImplementedError(
+            'return get_portfolio_returns should be rewriten!')
 
     @classmethod
-    def min_var_constraints(cls,constraints,add_default=True):
+    def min_var_constraints(cls, constraints, add_default=True):
         """
         the constraints function
 
@@ -373,11 +386,13 @@ class _MaxRiskAdjReturn(object):
         :param add_default: whether add the default constraints
         :return: the constraints
         """
-        
-        constraints = _SimpleOpt.create_constraints(constraints,add_default=add_default)
+
+        constraints = _SimpleOpt.create_constraints(
+            constraints, add_default=add_default)
         return constraints
+
     @classmethod
-    def loss_func(cls,w):
+    def loss_func(cls, w):
         """
         the loss function
 
@@ -387,17 +402,17 @@ class _MaxRiskAdjReturn(object):
         return cls.TC(w) + cls.aversion_risk(w) - cls.portfolio_returns(w)
 
     @classmethod
-    def aversion_risk(cls,w):
+    def aversion_risk(cls, w):
         """
         the risk aversion function
 
         :param w: the weight
         :return: the risk aversion
         """
-        return cls.risk_aversion() * np.dot(np.dot(w,cls.sigma2()),w.T)
+        return cls.risk_aversion() * np.dot(np.dot(w, cls.sigma2()), w.T)
 
     @classmethod
-    def portfolio_returns(cls,w):
+    def portfolio_returns(cls, w):
         """
         the portfolio returns function
 
@@ -405,16 +420,16 @@ class _MaxRiskAdjReturn(object):
         :return: the portfolio returns
         """
         try:
-            return np.sum(np.dot(w,cls.get_portfolio_returns()))
+            return np.sum(np.dot(w, cls.get_portfolio_returns()))
         except ValueError as e:
-            return np.sum(np.dot(w,cls.get_portfolio_returns().T))
+            return np.sum(np.dot(w, cls.get_portfolio_returns().T))
 
     @classmethod
-    def opt(cls,bounds,constraints,weight_length, method=None,jac=None,hess=None,hessp=None,tol=None,callback=None,option=None,**kwargs):
+    def opt(cls, bounds, constraints, weight_length, method=None, jac=None, hess=None, hessp=None, tol=None, callback=None, option=None, **kwargs):
         """
         the optimization function
 
-        
+
         :param bounds: the bounds of weight
         :param constraints: the constraints of weight
         :param method: the method of optimization
@@ -426,10 +441,10 @@ class _MaxRiskAdjReturn(object):
         fmin = cls.loss_func
         if method is None:
             method = 'L-BFGS-B'
-        return _SimpleOpt.scipy_optimize_minimize(w,fmin,bounds,cons,method=method,jac=jac,hess=hess,hessp=hessp,tol=tol,callback=callback,option=option,**kwargs)
+        return _SimpleOpt.scipy_optimize_minimize(w, fmin, bounds, cons, method=method, jac=jac, hess=hess, hessp=hessp, tol=tol, callback=callback, option=option, **kwargs)
 
     @classmethod
-    def run_opt(cls,stockpool,bounds,constraints,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, method=None, **kwargs):
         """
         the main(shell) func for Maximum Risk Adjust Return Optimization(MRAO)
         :param stockpool: the stockpool
@@ -440,7 +455,7 @@ class _MaxRiskAdjReturn(object):
         :return: the optimized weight
         """
         weight_length = len(stockpool)
-        return cls.opt(bounds,constraints,weight_length,method=method,**kwargs)
+        return cls.opt(bounds, constraints, weight_length, method=method, **kwargs)
 
 
 class _MaxIR(object):
@@ -461,7 +476,7 @@ class _MaxIR(object):
         :return: the total cost
         """
         return _SimpleOpt.tc(w)
-        
+
     @staticmethod
     def min_var_sigma2(w):
         """
@@ -471,6 +486,7 @@ class _MaxIR(object):
         :return: the sigma2
         """
         raise NotImplementedError('return sigma2 should be rewriten!')
+
     @staticmethod
     def risk_aversion(w):
         """
@@ -489,20 +505,21 @@ class _MaxIR(object):
         :param w: the weight
         :return: the portfolio returns
         """
-        raise NotImplementedError('return get_portfolio_returns should be rewriten!')
+        raise NotImplementedError(
+            'return get_portfolio_returns should be rewriten!')
 
     @classmethod
-    def portfolio_returns(cls,w):
+    def portfolio_returns(cls, w):
         """
         the portfolio returns function
         """
         try:
-            return np.sum(np.dot(w,cls.get_portfolio_returns()))
+            return np.sum(np.dot(w, cls.get_portfolio_returns()))
         except ValueError as e:
-            return np.sum(np.dot(w,cls.get_portfolio_returns().T))
+            return np.sum(np.dot(w, cls.get_portfolio_returns().T))
 
     @classmethod
-    def min_var_constraints(cls,constraints,add_default=True):
+    def min_var_constraints(cls, constraints, add_default=True):
         """
         the constraints function
 
@@ -510,13 +527,13 @@ class _MaxIR(object):
         :param add_default: whether add the default constraints
         :return: the constraints
         """
-        
-        constraints = _SimpleOpt.create_constraints(constraints,add_default=add_default)
+
+        constraints = _SimpleOpt.create_constraints(
+            constraints, add_default=add_default)
         return constraints
 
-
     @classmethod
-    def loss_func(cls,w):
+    def loss_func(cls, w):
         """
         the loss function
 
@@ -527,23 +544,23 @@ class _MaxIR(object):
         return (cls.TC(w) - cls.portfolio_returns(w))/cls.risk(w)
 
     @classmethod
-    def risk(cls,w):
-        s = np.dot(np.dot(w,cls.min_var_sigma2(w)),w.T)
-        if s <0:
-            warnings.warn("sigma2 is negative, please check your data! will set a large value 1w10!")
+    def risk(cls, w):
+        s = np.dot(np.dot(w, cls.min_var_sigma2(w)), w.T)
+        if s < 0:
+            warnings.warn(
+                "sigma2 is negative, please check your data! will set a large value 1w10!")
 
-            std  = 1e10
+            std = 1e10
         else:
             std = np.sqrt(s)
         return std
 
-
     @classmethod
-    def opt(cls,bounds,constraints,weight_length, method=None,jac=None,hess=None,hessp=None,tol=None,callback=None,option=None,**kwargs):
+    def opt(cls, bounds, constraints, weight_length, method=None, jac=None, hess=None, hessp=None, tol=None, callback=None, option=None, **kwargs):
         """
         the optimization function
 
-        
+
         :param
         """
         w = _SimpleOpt.create_weight(weight_length)
@@ -552,10 +569,10 @@ class _MaxIR(object):
         if method is None:
             method = 'L-BFGS-B'
 
-        return _SimpleOpt.scipy_optimize_minimize(w,fmin,bounds,cons,method=method,jac=jac,hess=hess,hessp=hessp,tol=tol,callback=callback,option=option,**kwargs)
+        return _SimpleOpt.scipy_optimize_minimize(w, fmin, bounds, cons, method=method, jac=jac, hess=hess, hessp=hessp, tol=tol, callback=callback, option=option, **kwargs)
 
     @classmethod
-    def run_opt(cls,stockpool,bounds,constraints,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, method=None, **kwargs):
         """
         the main(shell) func for Maximum ICIR Optimization(MICIPO)
         :param stockpool: the stockpool
@@ -566,13 +583,13 @@ class _MaxIR(object):
         :return: the optimized weight
         """
         weight_length = len(stockpool)
-        return cls.opt(bounds,constraints,weight_length,method=method,**kwargs)
+        return cls.opt(bounds, constraints, weight_length, method=method, **kwargs)
 
 
 class _MaxICIR(object):
 
     @classmethod
-    def _run_opt_func(cls,stockpool,bounds,constraints,min_var_sigma2,risk_aversion,get_portfolio_returns,TC_func=None,method=None,**kwargs):
+    def _run_opt_func(cls, stockpool, bounds, constraints, min_var_sigma2, risk_aversion, get_portfolio_returns, TC_func=None, method=None, **kwargs):
         """
         the main(shell) func for Maximum ICIR Optimization(MICIPO)
         :param stockpool: the stockpool
@@ -590,12 +607,12 @@ class _MaxICIR(object):
         else:
             _MaxIR.TC = TC_func
 
-        return _MaxIR.run_opt(stockpool,bounds,constraints,method=method,**kwargs)
+        return _MaxIR.run_opt(stockpool, bounds, constraints, method=method, **kwargs)
 
     @classmethod
-    def run_opt(cls,stockpool,bounds,constraints,sigma2,lambda_r,portfolio_returns,TC_func=None,method=None,**kwargs):
+    def run_opt(cls, stockpool, bounds, constraints, sigma2, lambda_r, portfolio_returns, TC_func=None, method=None, **kwargs):
         """
-        the main(shell) func for Maximum ICIR Optimization(MICIPO)
+        the main(shell) func for Maximum ICIR Optimization(MICIRO)
         :param stockpool: the stockpool
         :param bounds: the bounds of weight
         :param constraints: the constraints of weight
@@ -608,13 +625,11 @@ class _MaxICIR(object):
 
         def risk_aversion_func():
             return lambda_r
-        
 
         def get_portfolio_returns_func():
             return portfolio_returns
-        
 
-        return cls._run_opt_func(stockpool,bounds,constraints,min_var_sigma2_func,risk_aversion_func,get_portfolio_returns_func,TC_func=TC_func,method=method,**kwargs)
+        return cls._run_opt_func(stockpool, bounds, constraints, min_var_sigma2_func, risk_aversion_func, get_portfolio_returns_func, TC_func=TC_func, method=method, **kwargs)
 
 
 if __name__ == '__main__':
