@@ -1,6 +1,6 @@
 general_eq_rc:
   kwargs: 'object_one, object_two'
-  formual: 'object_one == object_two'
+  formula: 'object_one == object_two'
   direction: 'eq'
   import_func:
     - 'import numpy as np'
@@ -8,7 +8,7 @@ general_eq_rc:
 
 general_lower_rc:
   kwargs: 'bound_value, object'
-  formual: 'object - bound_value'
+  formula: 'object - bound_value'
   direction: 'lower'
   import_func:
     - 'import numpy as np'
@@ -16,7 +16,7 @@ general_lower_rc:
 
 general_upper_rc:
   kwargs: 'bound_value, object'
-  formual: 'bound_value - object '
+  formula: 'bound_value - object '
   direction: 'upper'
   import_func:
     - 'import numpy as np'
@@ -24,7 +24,7 @@ general_upper_rc:
 
 general_count_lower_rc:
   kwargs: 'bound_value, nega_inf=0'
-  formual: 'sum(w>nega_inf) - bound_value'
-  direction: 'upper'
+  formula: 'sum(w>nega_inf) - bound_value'
+  direction: 'lower'
   import_func:
     - 'import numpy as np'
