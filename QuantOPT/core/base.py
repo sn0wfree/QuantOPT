@@ -138,7 +138,7 @@ class _SimpleOpt(object):
         else:
             options.update({'maxiter': MAX_ITER_COUNT})
         return optimize.minimize(fmin, x, args=args, method=method, jac=jac, hessp=hessp, bounds=bounds,
-                                 constraints=constraints, tol=tol, callback=callback, options=options, **kwargs)
+                                 constraints=constraints, tol=tol, callback=callback, options=options, )
 
     @classmethod
     def create_constraints(cls, constraints, add_default=True):

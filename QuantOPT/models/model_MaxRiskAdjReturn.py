@@ -25,9 +25,9 @@ class MaxRiskAdjReturn(BaseModels):
         :return: the loss
         """
         try:
-            pr = np.sum(np.dot(w, cls.get_portfolio_returns(w)))
+            pr = np.nansum(np.dot(w, cls.get_portfolio_returns(w)))
         except ValueError as e:
-            pr = np.sum(np.dot(w, cls.get_portfolio_returns(w).T))
+            pr = np.nansum(np.dot(w, cls.get_portfolio_returns(w).T))
         return cls.TC(w) + cls.risk_aversion(w) * np.dot(np.dot(w, cls.min_var_sigma2(w)), w.T) - pr
 
     @staticmethod

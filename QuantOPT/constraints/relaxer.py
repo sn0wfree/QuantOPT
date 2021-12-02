@@ -1,13 +1,14 @@
 # coding=utf-8
 
+import os
 import warnings
-from typing import Union, Any
+from typing import Union
 
 import numpy as np
 
-from QuantOPT.constraints.constraints import Constraints
-from QuantOPT.core import core as opt3
+from QuantOPT.constraints.constraints import Constraints, create_constraints_holder
 from QuantOPT.core.base import _SimpleOpt
+from QuantOPT.core.core import Holder as opt3
 
 __current_priority__: int = 1
 __first_time__: bool = True
@@ -25,6 +26,8 @@ class Relaxer(object):
         :param constr_cls:
         :return:
         """
+        # if isinstance(constr_cls, str):
+        #     constr_cls = create_constraints_holder(constr_cls)
         if relax_mul < 0:
             warnings.warn(
                 'relax_mul must be greater than 0, will fiercely set to 1%')
@@ -57,9 +60,10 @@ class Relaxer(object):
         :param relax_mul_incr:
         :return:
         """
-        global __current_priority__
+        # global __current_priority__
         relax = priority == __current_priority__
         side = cls.get_side(func)
+        # first time run will not slack
         if relax and 'bound_value' in kwargs.keys() and not __first_time__:
             kwargs['bound_value'] = side * kwargs['bound_value'] * np.abs(relax_mul_incr) + kwargs['bound_value']
         return func(**kwargs)
@@ -69,7 +73,7 @@ class Relaxer(object):
         """
         get the current priority level of the constraint
         """
-        global __current_priority__
+        # global __current_priority__
         return __current_priority__
 
     @staticmethod
@@ -77,7 +81,7 @@ class Relaxer(object):
         """
         get the current priority level of the constraint
         """
-        global __current_priority__
+        # global __current_priority__
         return __current_priority__
 
     @staticmethod
@@ -150,16 +154,26 @@ class RunOpt(Relaxer):
     """
     run optimization
     """
-    kwargs_data: dict[str, Any]
+    __slots__ = ['method', 'kwargs_data', 'custom_constr_cls']
 
-    def __init__(self, method='MinVar', **kwargs):
+    def __init__(self, method=None, check=False, **kwargs):
         """
 
         :param method:
         :param kwargs:
         """
+        if check:
+            getattr(opt3, method)
         self.method = method
         self.kwargs_data = kwargs
+        # add custom constraints
+        if 'constr_cls' in kwargs.keys():
+            if isinstance(kwargs['constr_cls'], str) and os.path.exists(kwargs['constr_cls']):
+                self.custom_constr_cls = create_constraints_holder(kwargs['constr_cls'])
+            else:
+                self.custom_constr_cls = kwargs['constr_cls']
+        else:
+            self.custom_constr_cls = None
 
     def run_opt(self, constraint_param_list, slack=False, **kwargs):
         """
@@ -169,8 +183,18 @@ class RunOpt(Relaxer):
         :param kwargs:
         :return:
         """
+        if 'constr_cls' not in kwargs.keys() and self.custom_constr_cls is not None:
+            kwargs['constr_cls'] = self.custom_constr_cls
 
         func = self.run_opt_slack if slack else self.run_opt_single
+
+        if self.method is None:
+            if kwargs.get('method', None) is None:
+                raise NotImplementedError('method is not setup!')
+            else:
+                self.method = kwargs.get('method', None)
+        else:
+            pass
 
         return func(self.kwargs_data, constraint_param_list, self.method, **kwargs)
 
@@ -191,7 +215,7 @@ class RunOpt(Relaxer):
 
     @classmethod
     def run_opt_single(cls, kwargs_data, constraint_param_list, method, step_length=0.01, bounds=None, default_lower=0,
-                       default_upper=1, constr_cls=Constraints):
+                       default_upper=1, constr_cls=Constraints, if_exists='update', **kwargs):
         """
 
         run optimization
@@ -206,6 +230,18 @@ class RunOpt(Relaxer):
         :param constr_cls:
         :return:
         """
+        if isinstance(constr_cls, str) and os.path.exists(constr_cls):
+            constr_cls = create_constraints_holder(constr_cls)
+        for k, v in kwargs.items():
+            if k in kwargs_data.keys():
+                if if_exists == 'update':
+                    kwargs_data[k] = v
+                elif if_exists == 'ignore':
+                    pass
+                else:
+                    raise ValueError('kwargs conflict!')
+            else:
+                kwargs_data[k] = v
 
         # parse constraint parameters to constraint objects
         len_pool = len(kwargs_data['stockpool'])
@@ -218,11 +254,14 @@ class RunOpt(Relaxer):
 
     @classmethod
     def run_opt_slack(cls, kwargs_data, constraint_param_list, method, step_length=0.01, default_lower=0,
-                      default_upper=1, max_try_count=10, bounds=None, constr_cls=Constraints, show_constraints=False):
+                      default_upper=1, max_try_count=10, bounds=None, constr_cls=Constraints, show_constraints=False,
+                      if_exists='update',
+                      **kwargs):
         """
         run_opt_slack, run optimization with slack
         给定优化参数方法，使用opt3模块中的对应的优化方法进行优化，如果不成功，则使用slack方法进行优化，直到达到指定的最大尝试次数或者最大优先等级
 
+        :param if_exists:
         :param kwargs_data:
         :param constraint_param_list:
         :param method:
@@ -236,16 +275,19 @@ class RunOpt(Relaxer):
         :return:
         """
         global __current_priority__
-        global __max_try_count__
 
-        __first_time__ = True
+        # __first_time__ = True
         __current_priority__ = 1
-        funcs, kwargs, priorities, constraint_types = zip(*constraint_param_list)
+        _funcs, _kwargs, priorities, _constraint_types = zip(*constraint_param_list)
         max_priority = max(priorities)
         active_slack = max_priority != 0
+        if isinstance(constr_cls, str) and os.path.exists(constr_cls):
+            constr_cls = create_constraints_holder(constr_cls)
 
         res = cls.run_opt_single(kwargs_data, constraint_param_list, method, step_length=step_length, bounds=bounds,
-                                 default_lower=default_lower, default_upper=default_upper, constr_cls=constr_cls)
+                                 default_lower=default_lower, default_upper=default_upper, constr_cls=constr_cls,
+                                 if_exists=if_exists,
+                                 **kwargs)
 
         cls.switch_first_time()
         if active_slack:
@@ -255,7 +297,8 @@ class RunOpt(Relaxer):
                 res = cls.run_opt_single(kwargs_data, constraint_param_list, method, step_length=step_length,
                                          bounds=bounds,
                                          default_lower=default_lower, default_upper=default_upper,
-                                         constr_cls=constr_cls)
+                                         constr_cls=constr_cls, if_exists=if_exists,
+                                         **kwargs)
                 if count >= max_try_count:
                     warnings.warn('max try count reached! will improve priority level')
                     count = 0

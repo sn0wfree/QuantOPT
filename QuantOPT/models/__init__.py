@@ -2,7 +2,7 @@
 import numpy as np
 
 from QuantOPT.conf import MAX_ITER_COUNT
-from QuantOPT.core.core import _SimpleOpt
+from QuantOPT.core.base import _SimpleOpt
 
 
 class BaseModels(object):

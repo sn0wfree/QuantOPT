@@ -57,9 +57,9 @@ class MaxIR(BaseModels):
         """
         warnings.warn("由于超额收益构造复杂，且无直接数据，特此降维为组合收益超额收益，组合风险代替主动风险")
         try:
-            pr = np.sum(np.dot(w, cls.get_portfolio_returns(w)))
+            pr = np.nansum(np.dot(w, cls.get_portfolio_returns(w)))
         except ValueError as e:
-            pr = np.sum(np.dot(w, cls.get_portfolio_returns(w).T))
+            pr = np.nansum(np.dot(w, cls.get_portfolio_returns(w).T))
         return (cls.TC(w) - pr) / cls.risk(w)
 
     @classmethod

@@ -22,11 +22,11 @@ def read_requirements(filename):
 
 
 setup(
-    name="EventStudySuite",
+    name="QuantOPT",
     version=__version__,
     # python_requires='>=3.6',  # python环境
-    keywords=("Event Study", "analysis"),
-    description="a event study tool",
+    keywords=("QuantOPT", "analysis"),
+    description="a opt tool",
     long_description=read_file('README.md'),
     long_description_content_type="text/markdown",  # 新参数
     license="MIT Licence",
