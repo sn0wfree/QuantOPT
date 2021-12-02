@@ -1,1 +1,4 @@
-setuptools~=52.0.0
+pandas
+numpy
+scipy
+pyyaml

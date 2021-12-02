@@ -253,6 +253,7 @@ class MyTestCaseMaxRiskAdjReturn(unittest.TestCase):
         result = Ro.run_opt(constraint_param_list, slack=True, step_length=0.1, constr_cls=constr_cls, )
         self.assertEqual(result.success, True)
 
+
 class MyTestCaseMaxIR(unittest.TestCase):
     @property
     def method(self):
@@ -376,6 +377,7 @@ class MyTestCaseMaxIR(unittest.TestCase):
                     portfolio_returns=return_matrix)
         result = Ro.run_opt(constraint_param_list, slack=True, step_length=0.05, constr_cls=constr_cls, )
         self.assertEqual(result.success, True)
+
 
 class MyTestCaseNotExistsModel(unittest.TestCase):
     def test_no_exists_model(self):
