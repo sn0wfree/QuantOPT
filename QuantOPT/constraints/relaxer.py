@@ -8,7 +8,7 @@ import numpy as np
 
 from QuantOPT.constraints.constraints import Constraints, create_constraints_holder
 from QuantOPT.core.base import _SimpleOpt
-from QuantOPT.core.core import Holder as opt3
+from QuantOPT.core.model_core import Holder as opt3
 
 __current_priority__: int = 1
 __first_time__: bool = True
