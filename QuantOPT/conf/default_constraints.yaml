@@ -23,8 +23,15 @@ general_upper_rc:
 
 
 general_count_lower_rc:
-  kwargs: 'bound_value, nega_inf=0'
-  formula: 'sum(w>nega_inf) - bound_value'
+  kwargs: 'bound_value'
+  formula: 'np.nansum(w>0) - bound_value '
   direction: 'lower'
+  import_func:
+    - 'import numpy as np'
+
+general_count_upper_rc:
+  kwargs: 'bound_value'
+  formula: 'bound_value - np.nansum(w>0) '
+  direction: 'upper'
   import_func:
     - 'import numpy as np'

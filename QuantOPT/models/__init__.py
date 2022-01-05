@@ -7,6 +7,13 @@ from QuantOPT.core.base import _SimpleOpt
 
 class BaseModels(object):
     @staticmethod
+    def min_var_sigma2(*args, **kwargs):
+        """
+        return var_sigma function
+        """
+        return NotImplementedError('should be rewrite!')
+
+    @staticmethod
     def TC(w):
         """
         the total cost function

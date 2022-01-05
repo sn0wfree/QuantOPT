@@ -6,7 +6,7 @@ from typing import Union
 
 import numpy as np
 
-from QuantOPT.constraints.constraints import Constraints, create_constraints_holder
+from QuantOPT.constraints.constraints import Constraints, create_constraints_holder, MetaConstraints
 from QuantOPT.core.base import _SimpleOpt
 from QuantOPT.core.model_core import Holder as opt3
 
@@ -154,24 +154,30 @@ class RunOpt(Relaxer):
     """
     run optimization
     """
-    __slots__ = ['method', 'kwargs_data', 'custom_constr_cls']
+    __slots__ = ['method', 'kwargs_data', 'custom_constr_cls', 'model_holder']
 
     def __init__(self, method=None, check=False, **kwargs):
         """
 
         :param method:
+        :param check:
         :param kwargs:
         """
+        # self.model_holder = model_holder
         if check:
             getattr(opt3, method)
+
         self.method = method
         self.kwargs_data = kwargs
+
         # add custom constraints
         if 'constr_cls' in kwargs.keys():
             if isinstance(kwargs['constr_cls'], str) and os.path.exists(kwargs['constr_cls']):
                 self.custom_constr_cls = create_constraints_holder(kwargs['constr_cls'])
-            else:
+            elif isinstance(kwargs['constr_cls'], MetaConstraints) or issubclass(kwargs['constr_cls'],MetaConstraints):
                 self.custom_constr_cls = kwargs['constr_cls']
+            else:
+                raise ValueError('constr_cls got wrong type! only accept constr_cls.yaml or constraints class')
         else:
             self.custom_constr_cls = None
 
@@ -195,8 +201,8 @@ class RunOpt(Relaxer):
                 self.method = kwargs.get('method', None)
         else:
             pass
-
-        return func(self.kwargs_data, constraint_param_list, self.method, **kwargs)
+        res = func(self.kwargs_data, constraint_param_list, self.method, **kwargs)
+        return res
 
     @classmethod
     def param2constraints(cls, constraint_param_list, step_length=0.01, constr_cls=Constraints):

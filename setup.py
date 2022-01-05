@@ -35,8 +35,9 @@ setup(
     author=__author__,
     author_email="snowfreedom0815@gmail.com",
 
-    packages=find_packages(exclude=['dist', 'docs', 'QuantOPT.egg-info']),
+    packages=find_packages(exclude=['build', 'dist', 'docs', 'QuantOPT.egg-info']),
     include_package_data=True,
+    package_data={"": ['conf/*.yaml']},
     setup_requires=read_requirements('requirements.txt'),  # 指定需要安装的依赖,
 
 )

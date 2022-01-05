@@ -17,15 +17,6 @@ def parser_direction_sample(func_name, directions):
         raise ValueError(f"wrong direction value: {directions} for constraints {func_name}, only accept eq,upper,lower")
 
 
-class Ext(object):
-    @staticmethod
-    def general_linear_constraint_func(func):
-        def general_linear_constraint_func_inner(w):
-            return func(w)
-
-        return general_linear_constraint_func_inner
-
-
 def load_functions(func_name, kwargs, direction, formula, import_func):
     direction_sample = parser_direction_sample(func_name, direction)
     func_obj = main_write(func_name, kwargs, direction_sample, formula, import_func)
@@ -63,13 +54,19 @@ def load_all(f='./'):
     return map_setting_dict(load_yaml_settings(f))
 
 
-class Constraints(Ext):
-    pass
+class MetaConstraints(object): pass
 
 
-# string to attribute
-for func_name_sample, kwargs_sample, formula_sample, import_func, direction in load_all(f=setting_yaml_path):
-    set_attribute(Constraints, func_name_sample, kwargs_sample, direction, formula_sample, import_func)
+class Constraints(MetaConstraints): pass
+
+
+def init_constraints():
+    try:
+        # string to attribute
+        for func_name_sample, kwargs_sample, formula_sample, import_func, direction in load_all(f=setting_yaml_path):
+            set_attribute(Constraints, func_name_sample, kwargs_sample, direction, formula_sample, import_func)
+    except Exception as e:
+        print(e)
 
 
 def create_constraints_holder(setting_path, cls_name='SpecifiedConstraints'):
@@ -81,8 +78,10 @@ def create_constraints_holder(setting_path, cls_name='SpecifiedConstraints'):
         func_name, func_obj = load_functions(func_name_sample, kwargs_sample, direction, formula_sample, import_func)
         func_methods[func_name] = func_obj
 
-    return type(cls_name, (Ext,), func_methods)
+    return type(cls_name, (MetaConstraints,), func_methods)
 
+
+init_constraints()
 
 if __name__ == '__main__':
     pass
