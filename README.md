@@ -1,5 +1,19 @@
 # QuantOPT
 
+
+## Description
+
+This module is to create and run optimizer for the portfolio optimization. 
+it will have constraints with soft slack version and objects 
+
+main functions:
+1. RunOpt, main functions with slack constraints path
+2. create_constraints_holder, the creator for custom constraints with string
+3. Holder, model holder which can be defined by custom or new model
+
+
+
+
 ## Usage
 
 ```python
