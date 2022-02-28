@@ -69,7 +69,7 @@ def init_constraints():
         print(e)
 
 
-def create_constraints_holder(setting_path, cls_name='SpecifiedConstraints'):
+def create_constraints_holder(setting_path: str, cls_name: str = 'SpecifiedConstraints'):
     if setting_path is None:
         setting_path = setting_yaml_path
     func_methods = {}

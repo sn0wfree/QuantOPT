@@ -24,7 +24,7 @@ class Models(object):
         self.load_model_from_path(MODELS_PATH, py_pattern='model_*.py')
 
     @classmethod
-    def load_model_from_path(cls, models_path, py_pattern='model_*.py'):
+    def load_model_from_path(cls, models_path: str, py_pattern: str = 'model_*.py'):
         for x in glob(os.path.join(models_path, py_pattern)):
             model_name = os.path.basename(x)[6:-3]
             module_name = os.path.basename(x)[:-3]
@@ -38,7 +38,7 @@ class Models(object):
             cls.add_model(model_name, cls_obj)
 
     @classmethod
-    def add_model(cls, name, model):
+    def add_model(cls, name: str, model):
         setattr(cls, name, model)
 
 

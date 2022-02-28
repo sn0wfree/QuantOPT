@@ -1,11 +1,11 @@
 # coding =utf-8
 
-import warnings
 from collections import OrderedDict
-from typing import Union
 
 import numpy as np
+import warnings
 from scipy import optimize
+from typing import Union
 
 from QuantOPT.conf import MAX_ITER_COUNT
 
@@ -61,7 +61,7 @@ class _SimpleOpt(object):
         return 0
 
     @staticmethod
-    def create_bounds(weight_length: int, bounds=None, default_lower=0, default_upper=1):
+    def create_bounds(weight_length: int, bounds=None, default_lower: float = 0, default_upper: float = 1):
         """
         create_bound 给定权重的上下限，返回一个 OrderedDict.tolist() 可以转换为 scipy.optimize.minimize 的参数
 
@@ -81,7 +81,7 @@ class _SimpleOpt(object):
         return OB.tolist()
 
     @staticmethod
-    def total_upper(w):
+    def total_upper(w: (np.array, tuple, list)):
         """
         total upper bound of weight
 
@@ -141,7 +141,7 @@ class _SimpleOpt(object):
                                  constraints=constraints, tol=tol, callback=callback, options=options, )
 
     @classmethod
-    def create_constraints(cls, constraints, add_default=True):
+    def create_constraints(cls, constraints, add_default: bool = True):
         """
         create constraints from the given constraints parameters
         :param constraints: the constraints parameters

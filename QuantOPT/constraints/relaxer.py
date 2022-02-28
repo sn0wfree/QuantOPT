@@ -1,10 +1,9 @@
 # coding=utf-8
 
+import numpy as np
 import os
 import warnings
 from typing import Union
-
-import numpy as np
 
 from QuantOPT.constraints.constraints import Constraints, create_constraints_holder, MetaConstraints
 from QuantOPT.core.base import _SimpleOpt
@@ -50,7 +49,7 @@ class Relaxer(object):
         return side
 
     @classmethod
-    def parse(cls, func, kwargs, priority, relax_mul_incr: float = 0.01):
+    def parse(cls, func: object, kwargs: dict, priority: int, relax_mul_incr: float = 0.01):
         """
         parse constraint function to constraint object
 
@@ -61,6 +60,8 @@ class Relaxer(object):
         :return:
         """
         # global __current_priority__
+        if not isinstance(priority, int):
+            raise TypeError('priority must be int!')
         relax = priority == __current_priority__
         side = cls.get_side(func)
         # first time run will not slack
@@ -156,7 +157,7 @@ class RunOpt(Relaxer):
     """
     __slots__ = ['method', 'kwargs_data', 'custom_constr_cls', 'model_holder']
 
-    def __init__(self, method=None, check=False, **kwargs):
+    def __init__(self, method: str = None, check: bool = False, **kwargs):
         """
 
         :param method:
@@ -174,14 +175,14 @@ class RunOpt(Relaxer):
         if 'constr_cls' in kwargs.keys():
             if isinstance(kwargs['constr_cls'], str) and os.path.exists(kwargs['constr_cls']):
                 self.custom_constr_cls = create_constraints_holder(kwargs['constr_cls'])
-            elif isinstance(kwargs['constr_cls'], MetaConstraints) or issubclass(kwargs['constr_cls'],MetaConstraints):
+            elif isinstance(kwargs['constr_cls'], MetaConstraints) or issubclass(kwargs['constr_cls'], MetaConstraints):
                 self.custom_constr_cls = kwargs['constr_cls']
             else:
                 raise ValueError('constr_cls got wrong type! only accept constr_cls.yaml or constraints class')
         else:
             self.custom_constr_cls = None
 
-    def run_opt(self, constraint_param_list, slack=False, **kwargs):
+    def run_opt(self, constraint_param_list: list, slack: bool = False, **kwargs):
         """
 
         :param constraint_param_list:
@@ -205,7 +206,8 @@ class RunOpt(Relaxer):
         return res
 
     @classmethod
-    def param2constraints(cls, constraint_param_list, step_length=0.01, constr_cls=Constraints):
+    def param2constraints(cls, constraint_param_list: list, step_length: float = 0.01,
+                          constr_cls: object = Constraints):
         """
 
         parse constraint parameters to constraint objects
@@ -220,8 +222,9 @@ class RunOpt(Relaxer):
             yield {'type': c_types, 'fun': func}
 
     @classmethod
-    def run_opt_single(cls, kwargs_data, constraint_param_list, method, step_length=0.01, bounds=None, default_lower=0,
-                       default_upper=1, constr_cls=Constraints, if_exists='update', **kwargs):
+    def run_opt_single(cls, kwargs_data: dict, constraint_param_list: list, method: str, step_length: float = 0.01,
+                       bounds=None, default_lower: float = 0, default_upper: float = 1, constr_cls=Constraints,
+                       if_exists: str = 'update', **kwargs):
         """
 
         run optimization
@@ -259,10 +262,11 @@ class RunOpt(Relaxer):
         return res
 
     @classmethod
-    def run_opt_slack(cls, kwargs_data, constraint_param_list, method, step_length=0.01, default_lower=0,
-                      default_upper=1, max_try_count=10, bounds=None, constr_cls=Constraints, show_constraints=False,
-                      if_exists='update',
-                      **kwargs):
+    def run_opt_slack(cls, kwargs_data, constraint_param_list: list, method: str, step_length: float = 0.01,
+                      default_lower: float = 0,
+                      default_upper: float = 1, max_try_count: int = 10, bounds=None, constr_cls=Constraints,
+                      show_constraints: bool = False,
+                      if_exists: str = 'update', **kwargs):
         """
         run_opt_slack, run optimization with slack
         给定优化参数方法，使用opt3模块中的对应的优化方法进行优化，如果不成功，则使用slack方法进行优化，直到达到指定的最大尝试次数或者最大优先等级

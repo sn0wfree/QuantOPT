@@ -44,9 +44,9 @@ class BaseModels(object):
         # if method is None:
         #     method = 'L-BFGS-B'
         if 'options' not in kwargs:
-            kwargs['options'] = {'maxiter': MAX_ITER_COUNT}
-        else:
             kwargs['options'].update({'maxiter': MAX_ITER_COUNT})
+        # else:
+        #     kwargs['options'].update({'maxiter': MAX_ITER_COUNT})
         return _SimpleOpt.scipy_optimize_minimize(fmin, w, bounds=bounds, constraints=cons, method=method, **kwargs)
 
 
