@@ -8,23 +8,15 @@ import pandas as pd
 from QuantOPT.models import BaseModels
 
 
-class RiskParity(BaseModels, ABC):
+class RiskParity(BaseModels):
+    @classmethod
+    def mrc(cls, w, cov, port_std):
+        return (np.dot(cov, w) / port_std).ravel()
 
     @classmethod
-    def rc_i(cls, i, w, sigma2):
-        SIGMA_dot_w = np.dot(sigma2, w.T)
-        SIGMA_sqrt = np.sqrt(np.dot(w, np.dot(sigma2, w.T)))
-        return cls.rc_i_reduced(i, w, SIGMA_dot_w, SIGMA_sqrt)
-
-    @staticmethod
-    def rc_i_reduced(i, w, SIGMA_dot_w, SIGMA_sqrt):
-        d1 = w[i] * SIGMA_dot_w[i]
-        return d1 / SIGMA_sqrt
-
-    @staticmethod
-    def rc_i_reduced_num(w_i, SIGMA_dot_w_i, SIGMA_sqrt):
-        d1 = w_i * SIGMA_dot_w_i
-        return d1 / SIGMA_sqrt
+    def rc(cls, w, cov, port_std):
+        mrc = cls.mrc(w, cov, port_std)
+        return pd.DataFrame([w_i * mrc_i for w_i, mrc_i in zip(w, mrc)]).values.ravel()
 
     @classmethod
     def loss_func(cls, w: np.array, **kwargs):
@@ -33,17 +25,17 @@ class RiskParity(BaseModels, ABC):
         :param w: weight for min var
         :return: variance
         """
-        sigma2 = cls.min_var_sigma2(w)
-        SIGMA_dot_w = np.dot(sigma2, w.T)
-        SIGMA_sqrt = np.sqrt(np.dot(w, np.dot(sigma2, w.T)))
-        vri_list = (cls.rc_i_reduced_num(w_i, SIGMA_dot_w_i, SIGMA_sqrt) for w_i, SIGMA_dot_w_i in zip(w, SIGMA_dot_w))
-        temp = np.nansum([np.power(a - b, 2) for a, b in permutations(vri_list, 2)])
+        cov = cls.get_cov(w)
+        port_std = cls.get_port_std(w)
+        rc_list = cls.rc(w, cov, port_std)
+
+        temp = np.nansum([np.power(a - b, 2) for a, b in permutations(rc_list, 2)])
         return temp
 
     @classmethod
-    def run_opt(cls, stockpool: (list, np.array), sigma2: pd.DataFrame, bounds, constraints, method=None, **kwargs):
+    def run_opt(cls, stockpool: (list, np.array), port_std, cov, bounds, constraints, method=None, **kwargs):
         """
-        the main function for Minimum Variance Optimization(MVO) run optimization
+
         :param stockpool: the stockpool
         :param bounds: the bounds of weight
         :param constraints: the constraints of weight
@@ -53,10 +45,14 @@ class RiskParity(BaseModels, ABC):
         """
         weight_length = len(stockpool)
 
-        def min_var_sigma2(*args, **kwargs):
-            return sigma2
+        def get_cov(*args, **kwargs):
+            return cov
 
-        cls.min_var_sigma2 = min_var_sigma2
+        def get_port_std(*args, **kwargs):
+            return port_std
+
+        cls.get_cov = get_cov
+        cls.get_port_std = get_port_std
         return cls.opt(bounds, constraints, weight_length, method=method, **kwargs)
 
 

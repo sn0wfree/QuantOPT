@@ -28,9 +28,10 @@ class BaseModels(object):
         raise NotImplementedError('loss func have not been defined!')
 
     @classmethod
-    def opt(cls, bounds, constraints, weight_length, method=None, **kwargs):
+    def opt(cls, bounds, constraints, weight_length, method=None, add_default=True,**kwargs):
         """
         the core function to calculate optimized solutions thought scipy optimization and minimize
+        :param add_default:
         :param bounds: the bounds of weight
         :param constraints: the constraints of weight
         :param weight_length: the length of weight
@@ -39,7 +40,7 @@ class BaseModels(object):
         :return: the optimized weight
         """
         w = _SimpleOpt.create_weight(weight_length)
-        cons = _SimpleOpt.create_constraints(constraints, add_default=True)
+        cons = _SimpleOpt.create_constraints(constraints, add_default=add_default)
         fmin = cls.loss_func
         # if method is None:
         #     method = 'L-BFGS-B'
