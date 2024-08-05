@@ -28,7 +28,7 @@ class BaseModels(object):
         raise NotImplementedError('loss func have not been defined!')
 
     @classmethod
-    def opt(cls, bounds, constraints, weight_length, method=None, add_default=True,**kwargs):
+    def opt(cls, bounds, constraints, weight_length, method=None, add_default=True, **kwargs):
         """
         the core function to calculate optimized solutions thought scipy optimization and minimize
         :param add_default:
@@ -45,6 +45,7 @@ class BaseModels(object):
         # if method is None:
         #     method = 'L-BFGS-B'
         if 'options' not in kwargs:
+            kwargs['options'] = {}
             kwargs['options'].update({'maxiter': MAX_ITER_COUNT})
         # else:
         #     kwargs['options'].update({'maxiter': MAX_ITER_COUNT})
